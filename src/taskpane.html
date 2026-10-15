@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Brand Assets</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <link rel="stylesheet" href="taskpane.css" />
+</head>
+<body>
+  <header>
+    <h1>Brand assets</h1>
+    <input id="search" type="search" placeholder="Search all assets" aria-label="Search all assets" />
+  </header>
+  <nav id="breadcrumb" class="breadcrumb" aria-label="Folder path"></nav>
+  <main>
+    <div id="folders" class="folders"></div>
+    <div id="grid" class="grid"></div>
+    <p id="empty" class="empty" hidden>Nothing here.</p>
+  </main>
+  <footer id="status" class="status" role="status" aria-live="polite"></footer>
+  <script src="taskpane.bundle.js"></script>
+</body>
+</html>
