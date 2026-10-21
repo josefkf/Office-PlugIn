@@ -12,6 +12,8 @@ These scripts deploy Word, PowerPoint and Excel templates from a SharePoint libr
 
 All settings live in `OalConfig.psd1`.
 
+To try it by hand first, see **[QUICK-TEST.md](QUICK-TEST.md)**: a manual cmdlet-by-cmdlet functionality test, plus notes on thumbnails.
+
 ## Requirements
 - PowerShell 7.4+ on Windows. The SPO module loads through the Windows PowerShell compatibility layer, which is handled automatically.
 - SharePoint Administrator. Registering the PnP app needs admin consent.
