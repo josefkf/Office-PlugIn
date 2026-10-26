@@ -1,12 +1,11 @@
 <#
 .SYNOPSIS
     Recursively converts .docx/.xlsx/.pptx files into .dotx/.xltx/.potx templates.
+    Each template is saved in the same folder as its source file (same name, new extension).
+    Originals are left untouched.
 
 .PARAMETER Path
     Root folder to scan.
-.PARAMETER OutputPath
-    Optional. If set, templates are written there, mirroring the folder structure.
-    If omitted, templates are created next to the originals.
 .PARAMETER UseOffice
     Use Word/Excel/PowerPoint COM automation (SaveAs template). Requires Office installed.
     Default is a pure OpenXML approach (no Office needed): copy the file, rename the
@@ -15,14 +14,13 @@
     Overwrite existing templates.
 
 .EXAMPLE
-    .\Convert-ToOfficeTemplates.ps1 -Path C:\Docs -OutputPath C:\Templates
+    .\Convert-ToOfficeTemplates.ps1 -Path C:\Docs
 .EXAMPLE
     .\Convert-ToOfficeTemplates.ps1 -Path C:\Docs -UseOffice -WhatIf
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory)][string]$Path,
-    [string]$OutputPath,
     [switch]$UseOffice,
     [switch]$Overwrite
 )
@@ -32,10 +30,6 @@ Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $Path = (Resolve-Path $Path).Path
-if ($OutputPath) {
-    if (-not (Test-Path $OutputPath)) { New-Item -ItemType Directory -Path $OutputPath | Out-Null }
-    $OutputPath = (Resolve-Path $OutputPath).Path
-}
 
 # ext -> template ext, old main content type, new main content type, Office SaveAs format
 $map = @{
@@ -55,12 +49,6 @@ $map = @{
 
 function Get-TargetPath([System.IO.FileInfo]$File, [string]$NewExt) {
     $name = [IO.Path]::ChangeExtension($File.Name, $NewExt)
-    if ($OutputPath) {
-        $rel = $File.DirectoryName.Substring($Path.Length).TrimStart('\','/')
-        $dir = Join-Path $OutputPath $rel
-        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-        return Join-Path $dir $name
-    }
     return Join-Path $File.DirectoryName $name
 }
 
