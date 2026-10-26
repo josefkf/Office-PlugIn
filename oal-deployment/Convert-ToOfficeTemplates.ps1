@@ -6,7 +6,7 @@
     (Report.docx -> Report.docx.bak). Nothing is deleted.
 
 .PARAMETER Path
-    Root folder to scan.
+    Root folder to scan (recursively). Defaults to the folder the script is in.
 .PARAMETER UseOffice
     Use Word/Excel/PowerPoint COM automation (SaveAs template). Requires Office installed.
     Default is a pure OpenXML approach (no Office needed): copy the file, rename the
@@ -17,13 +17,15 @@
     Overwrite existing templates.
 
 .EXAMPLE
+    .\Convert-ToOfficeTemplates.ps1                 # scans the script's own folder
+.EXAMPLE
     .\Convert-ToOfficeTemplates.ps1 -Path C:\Docs
 .EXAMPLE
     .\Convert-ToOfficeTemplates.ps1 -Path C:\Docs -UseOffice -WhatIf
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [Parameter(Mandatory)][string]$Path,
+    [string]$Path = $PSScriptRoot,
     [string]$OriginalExtension = '.bak',
     [switch]$UseOffice,
     [switch]$Overwrite
@@ -102,8 +104,13 @@ function Convert-Office([string]$Source, [string]$Target, $Info) {
 }
 
 $ok = 0; $skipped = 0; $failed = 0
-$files = Get-ChildItem -LiteralPath $Path -Recurse -File |
-    Where-Object { $map.ContainsKey($_.Extension.ToLower()) -and $_.Name -notlike '~$*' }
+Write-Host "Scanning: $Path"
+$enumErrors = @()
+$all = @(Get-ChildItem -LiteralPath $Path -Recurse -File -Force -ErrorAction SilentlyContinue -ErrorVariable enumErrors)
+$files = @($all | Where-Object { $map.ContainsKey($_.Extension.ToLower()) -and $_.Name -notlike '~$*' })
+Write-Host ("Found {0} files in total, {1} to convert ({2})" -f $all.Count, $files.Count,
+    (($files | Group-Object { $_.Extension.ToLower() } | ForEach-Object { "$($_.Count) $($_.Name)" }) -join ', '))
+foreach ($e in $enumErrors) { Write-Warning "Could not read: $($e.TargetObject) - $($e.Exception.Message)" }
 
 try {
     foreach ($f in $files) {
@@ -111,7 +118,7 @@ try {
         $target = Get-TargetPath $f $info.Ext
 
         if ((Test-Path -LiteralPath $target) -and -not $Overwrite) {
-            Write-Verbose "Skip (exists): $target"; $skipped++; continue
+            Write-Host "SKIP $($f.FullName) (template exists, use -Overwrite)"; $skipped++; continue
         }
         if (-not $PSCmdlet.ShouldProcess($f.FullName, "Convert to $($info.Ext)")) { continue }
 
