@@ -2,7 +2,8 @@
 .SYNOPSIS
     Recursively converts .docx/.xlsx/.pptx files into .dotx/.xltx/.potx templates.
     Each template is saved in the same folder as its source file (same name, new extension).
-    Originals are left untouched.
+    After a successful conversion the original is renamed by appending an extra extension
+    (Report.docx -> Report.docx.bak). Nothing is deleted.
 
 .PARAMETER Path
     Root folder to scan.
@@ -10,6 +11,8 @@
     Use Word/Excel/PowerPoint COM automation (SaveAs template). Requires Office installed.
     Default is a pure OpenXML approach (no Office needed): copy the file, rename the
     extension and patch the main part's content type in [Content_Types].xml.
+.PARAMETER OriginalExtension
+    Extension appended to the original file after conversion. Default: .bak
 .PARAMETER Overwrite
     Overwrite existing templates.
 
@@ -21,6 +24,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory)][string]$Path,
+    [string]$OriginalExtension = '.bak',
     [switch]$UseOffice,
     [switch]$Overwrite
 )
@@ -115,6 +119,8 @@ try {
             if ($UseOffice) { Convert-Office $f.FullName $target $info }
             else            { Convert-OpenXml $f.FullName $target $info }
             Write-Host "OK   $($f.FullName) -> $target"
+            try { Rename-Item -LiteralPath $f.FullName -NewName ($f.Name + $OriginalExtension) }
+            catch { Write-Warning "Converted, but could not rename original $($f.FullName): $($_.Exception.Message)" }
             $ok++
         }
         catch {
